@@ -1,4 +1,3 @@
-import './App.css';
 import {Canvas, useFrame} from 'react-three-fiber';
 import {useRef} from 'react';
 
@@ -16,7 +15,7 @@ const Box = () => {
       <meshBasicMaterial color='blue'/>
     </mesh>
   )
-} 
+}
 function App() {
 
   return (
