@@ -1,5 +1,5 @@
 import {Canvas, useFrame, useThree, extend, useLoader} from 'react-three-fiber';
-import {useEffect, useRef} from 'react';
+import {useRef} from 'react';
 import {
   OrbitControls
 } from "three/examples/jsm/controls/OrbitControls";
@@ -30,7 +30,32 @@ const Box = (props) => {
       ref={boxRef}
       {...props}
       castShadow
-      receiveShadow>
+      receiveShadow
+      onPointerDown={e => {
+        // lock the scale if clicked
+        e.object.active = true
+        if (window.activeMesh) {
+          e.object.scale.x = 1
+          e.object.scale.y = 1
+          e.object.scale.z = 1
+          window.activeMesh = false
+        }
+        window.activeMesh = e.object
+        }
+      }
+      onPointerEnter={e => {
+        e.object.scale.x = 1.5
+        }
+      }
+      onPointerLeave={e => {
+        if (!e.object.active) {
+          e.object.scale.x = 1
+          e.object.scale.y = 1
+          e.object.scale.z = 1
+          }
+        }
+      }
+      >
       <sphereBufferGeometry args={[1,100,100]}/>
       <Orbit />
       <meshPhysicalMaterial map={texture}/>
@@ -41,7 +66,7 @@ const Box = (props) => {
 const Floor = props => {
   return (
     <mesh {...props} receiveShadow>
-      <boxBufferGeometry args={[10,1,10]}/>
+      <boxBufferGeometry args={[15,1,10]}/>
       <meshPhysicalMaterial />
     </mesh>
   )
@@ -78,25 +103,57 @@ const Background = props => {
 }
 
 function App() {
+  const handleClick = e => {
+    if (!window.activeMesh) return
+    window.activeMesh.material.color = new THREE.Color(e.target.style.background)
+  }
 
   return (
-    <Canvas
-      shadowMap
-      style={{height:'100vh', width: '100vw', background: 'black'}}
-      camera={{position: [3, 3, 3]}}
+    <div
+      style={{height:'100vh', width: '100vw'}}
     >
-      <fog attach='fog' args={['white', 1, 10]}/>
-      <ambientLight intensity={0.2} />
-      <Bulb position={[1,3,1]}/>
-      <Suspense fallback={null}>
-        <Box position={[1,1,0]}/>
-      </Suspense>
-      <axesHelper args={[5]}/>
-      <Floor position={[0,-0.5,0]}/>
-      <Suspense fallback={null}>
-        <Background />
-      </Suspense>
-    </Canvas>
+      <div style={{position: 'absolute', zIndex: '1'}}>
+        <div
+          onClick={handleClick}
+          style={{background: 'blue', height: '50px', width: '50px'}}
+        >
+
+        </div>
+        <div
+          onClick={handleClick}
+          style={{background: 'yellow', height: '50px', width: '50px'}}
+        >
+
+        </div>
+        <div
+          onClick={handleClick}
+          style={{background: 'white', height: '50px', width: '50px'}}
+        >
+
+        </div>
+      </div>
+      <Canvas
+        shadowMap
+        camera={{position: [6,6,6]}}
+      >
+        <fog attach='fog' args={['white', 1, 20]}/>
+        <ambientLight intensity={0.2} />
+        <Bulb position={[0,8,0]}/>
+
+        <Suspense fallback={null}>
+          <Box position={[-3,1,0]}/>
+        </Suspense>
+        <Suspense fallback={null}>
+          <Box position={[3,1,0]}/>
+        </Suspense>
+        <axesHelper args={[5]}/>
+        <Floor position={[0,-0.5,0]}/>
+
+        <Suspense fallback={null}>
+          <Background />
+        </Suspense>
+      </Canvas>
+    </div>
   );
 }
 
