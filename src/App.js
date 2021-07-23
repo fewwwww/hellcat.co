@@ -18,7 +18,6 @@ const Box = (props) => {
   const ref = useRef()
 
   useFrame(state => {
-    ref.current.rotation.x += 0.01
     ref.current.rotation.y += 0.02
   })
 
@@ -26,7 +25,16 @@ const Box = (props) => {
     <mesh ref={ref} {...props} castShadow receiveShadow>
       <boxBufferGeometry />
       <Orbit />
-      <meshPhysicalMaterial color='blue'/>
+      <meshPhysicalMaterial
+        color='blue'
+        transparent
+        // metalness={1}
+        roughness={0}
+        clearcoat={1}
+        transmission={0.7}
+        reflectivity={1}
+        side={THREE.DoubleSide}
+      />
     </mesh>
   )
 }
@@ -57,6 +65,7 @@ function App() {
       style={{height:'100vh', width: '100vw', background: 'black'}}
       camera={{position: [3, 3, 3]}}
     >
+      <fog attach='fog' args={['white', 1, 10]}/>
       <ambientLight intensity={0.2} />
       <Bulb position={[1,3,1]}/>
       <Box position={[1,1,0]}/>
