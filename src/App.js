@@ -74,8 +74,13 @@ const Drag = props => {
 const Bulb = props => {
   return (
     <mesh {...props}>
-      <sphereBufferGeometry args={[0.2, 20, 10]} />
-      <pointLight castShadow/>
+      <sphereBufferGeometry args={[0.2, 20, 10]}/>
+      <pointLight
+        castShadow
+        shadow-mapSize-height={2 ** 10}
+        shadow-mapSize-width={2 ** 10}
+        shadow-radius={ 10 }
+      />
       <meshPhongMaterial emissive='yellow'/>
     </mesh>
   )
@@ -86,6 +91,15 @@ const Model = props => {
     GLTFLoader,
     props.path
   )
+
+  model.scene.traverse(child => {
+    if (child.isMesh) {
+      child.castShadow = true
+      child.receiveShadow = true
+      child.material.side = THREE.FrontSide
+    }
+  })
+
   return (
     <primitive
       object={model.scene}
@@ -143,7 +157,7 @@ const Floor = props => {
 const Background = props => {
   const texture = useLoader(
     THREE.TextureLoader,
-    '/bg.jpeg'
+    '/bg.jpg'
   )
 
   // format the stretch of texture correctly
@@ -163,8 +177,12 @@ const Background = props => {
 }
 
 const CameraControls = ({}) => {
-  const vec = new THREE.Vector3()
   useFrame(({camera, scene}) => {
+    if (state.activeMesh.name !== state.activeMeshName) {
+      state.activeMesh = scene.getObjectByName(
+        state.activeMeshName
+      ) || {}
+    }
     if (state.shouldUpdate) {
       camera.position.lerp(state.cameraPos, 0.1)
       scene.orbitControls.target.lerp(state.target, 0.1)
@@ -182,17 +200,20 @@ const CameraButtons = ({}) => {
   const sets = {
     1: {
       cameraPos: [-15,3,9],
-      target: [-4,0,0]
+      target: [-4,0,0],
+      name: 'object028_Material005_0'
     },
     2: {
       cameraPos: [9,4,9],
-      target: [4,0,0]
+      target: [4,0,0],
+      name: 'object001_Material011_0'
     }
   }
 
   const handleClick = (num) => {
     state.cameraPos.set(...sets[num].cameraPos)
     state.target.set(...sets[num].target)
+    state.activeMeshName = sets[num].name
     state.shouldUpdate = true
   }
 
@@ -244,59 +265,64 @@ const CameraButtons = ({}) => {
   )
 }
 
-function App() {
+const ColorPicker = props => {
   const handleClick = e => {
-    if (!window.activeMesh) return
-    window.activeMesh.material.color = new THREE.Color(e.target.style.background)
+    if (!state.activeMesh) return
+    state.activeMesh.material.color = new THREE.Color(e.target.style.background)
   }
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        zIndex: 1,
+        left: 0,
+        right: 0,
+        margin: 'auto',
+        width: 'fit-content',
+        display: 'flex',
+        top: '20px'
+      }}
+    >
+      <div
+        onClick={handleClick}
+        style={{
+          background: '#de0f18',
+          height: 50,
+          width: 50
+        }}
+      >
+
+      </div>
+      <div
+        onClick={handleClick}
+        style={{
+          background: 'black',
+          height: 50,
+          width: 50
+        }}
+      >
+
+      </div>
+      <div
+        onClick={handleClick}
+        style={{
+          background: '#fffff6',
+          height: 50,
+          width: 50
+        }}
+      >
+
+      </div>
+    </div>
+  )
+}
+
+function App() {
 
   return (
     <div style={{height:'100vh', width: '100vw'}}>
-      {/* color picker*/}
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 1,
-          left: 0,
-          right: 0,
-          margin: 'auto',
-          width: 'fit-content',
-          display: 'flex',
-          top: '20px'
-        }}
-      >
-        <div
-          onClick={handleClick}
-          style={{
-            background: 'blue',
-            height: 50,
-            width: 50
-          }}
-        >
-
-        </div>
-        <div
-          onClick={handleClick}
-          style={{
-            background: 'yellow',
-            height: 50,
-            width: 50
-          }}
-        >
-
-        </div>
-        <div
-          onClick={handleClick}
-          style={{
-            background: 'white',
-            height: 50,
-            width: 50
-          }}
-        >
-
-        </div>
-      </div>
       <CameraButtons />
+      <ColorPicker />
 
       <Canvas
         shadowMap
@@ -305,8 +331,13 @@ function App() {
         <CameraControls />
         <ambientLight intensity={0.2} />
         <Orbit />
+        <directionalLight
+          position={[0,20,3]}
+          intensity={1}
+          castShadow
+        />
         <Bulb position={[-8,5,0]}/>
-        <Bulb position={[0,5,0]}/>
+        <Bulb position={[0,15,10]}/>
         <Bulb position={[8,5,0]}/>
 
         {/* main objs */}
