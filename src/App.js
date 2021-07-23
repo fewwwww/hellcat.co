@@ -3,7 +3,8 @@ import {useRef} from 'react';
 import {
   OrbitControls
 } from "three/examples/jsm/controls/OrbitControls";
-extend({OrbitControls})
+import * as THREE from 'three';
+extend({OrbitControls});
 
 const Orbit = () => {
   const {camera, gl} = useThree()
@@ -35,6 +36,15 @@ function App() {
     camera={{position: [3, 3, 3]}}>
       <Box position={[1,1,0]}/>
       <axesHelper args={[5, ]}/>
+      <mesh>
+        <meshBasicMaterial side={THREE.DoubleSide}/>
+        <geometry>
+          <face3 args={[0,1,2]} attachArray='faces'/>
+          <vector3 args={[0,-1,-1]} attachArray='vertices'/>
+          <vector3 args={[1,-1,-1]} attachArray='vertices'/>
+          <vector3 args={[0,0,-1]} attachArray='vertices'/>
+        </geometry>
+      </mesh>
     </Canvas>
   );
 }
