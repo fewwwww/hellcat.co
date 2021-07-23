@@ -7,6 +7,7 @@ import {Physics, useTrimesh} from "use-cannon";
 import { useBox } from "use-cannon";
 import { Suspense } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import state from './state';
 
 extend({ OrbitControls, DragControls });
 
@@ -161,6 +162,88 @@ const Background = props => {
   )
 }
 
+const CameraControls = ({}) => {
+  const vec = new THREE.Vector3()
+  useFrame(({camera, scene}) => {
+    if (state.shouldUpdate) {
+      camera.position.lerp(state.cameraPos, 0.1)
+      scene.orbitControls.target.lerp(state.target, 0.1)
+      scene.orbitControls.update()
+      const diff = camera.position.clone().sub(state.cameraPos).length()
+      if (diff < 0.1) {state.shouldUpdate = false}
+    }
+  })
+  return (
+    null
+  )
+}
+
+const CameraButtons = ({}) => {
+  const sets = {
+    1: {
+      cameraPos: [-15,3,9],
+      target: [-4,0,0]
+    },
+    2: {
+      cameraPos: [9,4,9],
+      target: [4,0,0]
+    }
+  }
+
+  const handleClick = (num) => {
+    state.cameraPos.set(...sets[num].cameraPos)
+    state.target.set(...sets[num].target)
+    state.shouldUpdate = true
+  }
+
+  return (
+    <>
+      <button
+        onClick={e => handleClick(1)}
+        style={{
+          zIndex: '1',
+          position: 'absolute',
+          bottom: '10vh',
+          left: '40vw',
+          height: '50px',
+          width: '50px',
+          background: 'white',
+          textAlign: 'center',
+          borderRadius: '100%',
+          fontSize: '30px',
+          fontWeight: '900',
+          opacity: '0.7',
+          border: '1px solid black',
+          cursor: 'pointer'
+        }}
+      >
+        {'<'}
+      </button>
+      <button
+        onClick={e => handleClick(2)}
+        style={{
+          zIndex: '1',
+          position: 'absolute',
+          bottom: '10vh',
+          right: '40vw',
+          height: '50px',
+          width: '50px',
+          background: 'white',
+          textAlign: 'center',
+          borderRadius: '100%',
+          fontSize: '30px',
+          fontWeight: '900',
+          opacity: '0.7',
+          border: '1px solid black',
+          cursor: 'pointer'
+        }}
+      >
+        {'>'}
+      </button>
+    </>
+  )
+}
+
 function App() {
   const handleClick = e => {
     if (!window.activeMesh) return
@@ -213,24 +296,27 @@ function App() {
 
         </div>
       </div>
+      <CameraButtons />
 
       <Canvas
         shadowMap
         camera={{position: [10,10,10]}}
       >
+        <CameraControls />
         <ambientLight intensity={0.2} />
         <Orbit />
+        <Bulb position={[-8,5,0]}/>
         <Bulb position={[0,5,0]}/>
+        <Bulb position={[8,5,0]}/>
 
         {/* main objs */}
         <Physics>
           <Suspense fallback={null}>
             <Drag transformGroup>
               <BoundingBox
-                position={[4,1.5,0]}
+                position={[4,2,0]}
                 dims={[3.2,1.7,7.5]}
                 offset={[0,-1.2,0]}
-                visible
               >
                 <Model
                   path='/dodge_challenger/scene.gltf'
@@ -241,10 +327,9 @@ function App() {
 
             <Drag transformGroup>
               <BoundingBox
-                position={[-4,1.5,0]}
+                position={[-4,2,0]}
                 dims={[4,1.3,8.7]}
                 offset={[0,-0.1,0.5]}
-                visible
               >
                 <Model
                   path='/lamborghini_aventador_j/scene.gltf'
