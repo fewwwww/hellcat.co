@@ -151,3 +151,15 @@ function App() {
   );
 }
 ```
+
+## Events
+
+onPointerDown: click the obj
+```
+<mesh onPointerDown={e => {console.log(e)}}>
+```
+
+onPointerEnter/onPointerLeave: just like hover
+```
+<mesh onPointerEnter={e => {e.object.scale.x = 1.5}>
+```
