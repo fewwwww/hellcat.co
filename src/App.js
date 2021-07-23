@@ -89,8 +89,21 @@ const Bulb = props => {
 const Model = props => {
   const model = useLoader(
     GLTFLoader,
-    props.path
+    process.env.PUBLIC_URL + props.path
   )
+
+  let mixer
+  if (model.animations.length > 0) {
+    mixer = new THREE.AnimationMixer(model.scene)
+    model.animations.forEach(clip => {
+      const action = mixer.clipAction(clip)
+      action.play()
+    })
+  }
+
+  useFrame((scene,delta) => {
+    mixer?.update(delta)
+  })
 
   model.scene.traverse(child => {
     if (child.isMesh) {
@@ -141,15 +154,15 @@ const BoundingBox = ({
 const Floor = props => {
   const [ref, api] = useBox(() =>
     ({
-      args: [15,2,10],
+      args: [20,2,10],
       ...props
     })
   )
 
   return (
     <mesh {...props} receiveShadow>
-      <boxBufferGeometry args={[15,1,10]}/>
-      <meshPhysicalMaterial />
+      <boxBufferGeometry args={[200, 1, 200]}/>
+      <meshPhysicalMaterial transparent opacity={0.2}/>
     </mesh>
   )
 }
@@ -157,7 +170,7 @@ const Floor = props => {
 const Background = props => {
   const texture = useLoader(
     THREE.TextureLoader,
-    '/bg.jpg'
+    process.env.PUBLIC_URL + '/bg.jpg'
   )
 
   // format the stretch of texture correctly
@@ -368,11 +381,16 @@ function App() {
                 />
               </BoundingBox>
             </Drag>
+            <Model
+              path='/reap_the_whirlwind/scene.gltf'
+              scale={[0.008, 0.008, 0.008]}
+            />
           </Suspense>
-          <Floor position={[0,-0.5,0]}/>
+          <Floor
+            position={[0,-0.5,0]}
+          />
         </Physics>
 
-        <axesHelper args={[5]}/>
         <Suspense fallback={null}>
           <Background />
         </Suspense>
