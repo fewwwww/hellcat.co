@@ -1,4 +1,4 @@
-# react-three-fiber syntax
+# react-three-fiber && use-cannon syntax
 
 ## Basic
 
@@ -149,6 +149,26 @@ function App() {
       </Suspense>
     </Canvas>
   );
+}
+```
+
+- useBox: physical box
+
+```
+const Floor = props => {
+  const [ref, api] = useBox(() =>
+    ({
+      args: [15,2,10],
+      ...props
+    })
+  )
+
+  return (
+    <mesh {...props}>
+      <boxBufferGeometry args={[15,1,10]}/>
+      <meshPhysicalMaterial />
+    </mesh>
+  )
 }
 ```
 
