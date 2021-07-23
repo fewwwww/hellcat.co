@@ -1,10 +1,10 @@
-import {Canvas, useFrame, useThree, extend} from 'react-three-fiber';
-import {useRef} from 'react';
+import {Canvas, useFrame, useThree, extend, useLoader} from 'react-three-fiber';
+import {useEffect, useRef} from 'react';
 import {
   OrbitControls
 } from "three/examples/jsm/controls/OrbitControls";
 import * as THREE from 'three';
-import {useTrimesh} from "use-cannon";
+import {Suspense} from "react";
 extend({OrbitControls});
 
 const Orbit = () => {
@@ -15,26 +15,25 @@ const Orbit = () => {
 }
 
 const Box = (props) => {
-  const ref = useRef()
+  const boxRef = useRef()
+  const texture = useLoader(
+    THREE.TextureLoader,
+    '/wood.jpeg'
+  )
 
   useFrame(state => {
-    ref.current.rotation.y += 0.02
+    boxRef.current.rotation.x += 0.01
   })
 
   return (
-    <mesh ref={ref} {...props} castShadow receiveShadow>
-      <boxBufferGeometry />
+    <mesh
+      ref={boxRef}
+      {...props}
+      castShadow
+      receiveShadow>
+      <sphereBufferGeometry args={[1,100,100]}/>
       <Orbit />
-      <meshPhysicalMaterial
-        color='blue'
-        transparent
-        // metalness={1}
-        roughness={0}
-        clearcoat={1}
-        transmission={0.7}
-        reflectivity={1}
-        side={THREE.DoubleSide}
-      />
+      <meshPhysicalMaterial map={texture}/>
     </mesh>
   )
 }
@@ -57,6 +56,27 @@ const Bulb = props => {
     </mesh>
   )
 }
+
+const Background = props => {
+  const texture = useLoader(
+    THREE.TextureLoader,
+    '/sky.jpeg'
+  )
+
+  // format the stretch of texture correctly
+  const {gl} = useThree()
+  const formattedTexture = new THREE.WebGLCubeRenderTarget(
+    texture.image.height
+  ).fromEquirectangularTexture(gl, texture)
+
+  return (
+    <primitive
+      object={formattedTexture}
+      attach='background'
+    />
+  )
+}
+
 function App() {
 
   return (
@@ -68,9 +88,14 @@ function App() {
       <fog attach='fog' args={['white', 1, 10]}/>
       <ambientLight intensity={0.2} />
       <Bulb position={[1,3,1]}/>
-      <Box position={[1,1,0]}/>
-      <axesHelper args={[5, ]}/>
+      <Suspense fallback={null}>
+        <Box position={[1,1,0]}/>
+      </Suspense>
+      <axesHelper args={[5]}/>
       <Floor position={[0,-0.5,0]}/>
+      <Suspense fallback={null}>
+        <Background />
+      </Suspense>
     </Canvas>
   );
 }
