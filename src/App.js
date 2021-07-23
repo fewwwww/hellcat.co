@@ -3,7 +3,7 @@ import { useRef, useState, useEffect, useMemo } from 'react';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import * as THREE from 'three';
-import { Physics } from "use-cannon";
+import {Physics, useTrimesh} from "use-cannon";
 import { useBox } from "use-cannon";
 import { Suspense } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -70,6 +70,16 @@ const Drag = props => {
   )
 }
 
+const Bulb = props => {
+  return (
+    <mesh {...props}>
+      <sphereBufferGeometry args={[0.2, 20, 10]} />
+      <pointLight castShadow/>
+      <meshPhongMaterial emissive='yellow'/>
+    </mesh>
+  )
+}
+
 const Model = props => {
   const model = useLoader(
     GLTFLoader,
@@ -83,60 +93,33 @@ const Model = props => {
   )
 }
 
-const Box = (props) => {
-  const [ref, api] = useBox(() => ({mass: 1, ...props}))
-  const texture = useLoader(
-    THREE.TextureLoader,
-    '/wood.jpeg'
-  )
-  //
-  // useFrame(state => {
-  //   boxRef.current.rotation.x += 0.01
-  // })
-
-  const handlePointerDown = e => {
-    e.object.active = true;
-    if (window.activeMesh) {
-      scaleDown(window.activeMesh)
-      window.activeMesh.active = false;
-    }
-    window.activeMesh = e.object
-  }
-
-  const handlePointerEnter = e => {
-    e.object.scale.x = 1.5
-    e.object.scale.y = 1.5
-    e.object.scale.z = 1.5
-  }
-
-  const handlePointerLeave = e => {
-    if (!e.object.active) {
-      scaleDown(e.object)
-    }
-  }
-
-  const scaleDown = object => {
-    object.scale.x = 1
-    object.scale.y = 1
-    object.scale.z = 1
-  }
+const BoundingBox = ({
+  position = [0,0,0],
+  offset = [0,0,0],
+  dims=[1,1,1],
+  visible = false,
+  children
+}) => {
+  const [ref, api] = useBox(() => ({mass: 1, args: dims, position: position}))
 
   return (
-    <mesh
+    <group
       ref={ref}
       api={api}
-      {...props}
-      castShadow
-      receiveShadow
-      onPointerDown={handlePointerDown}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
     >
-      <sphereBufferGeometry args={[1,100,100]}/>
-      <meshPhysicalMaterial
-        map={texture}
-      />
-    </mesh>
+      <mesh
+        scale={dims}
+        visible={visible}
+      >
+        <boxBufferGeometry />
+        <meshPhysicalMaterial wireframe />
+      </mesh>
+      <group
+        position={offset}
+      >
+        {children}
+      </group>
+    </group>
   )
 }
 
@@ -152,16 +135,6 @@ const Floor = props => {
     <mesh {...props} receiveShadow>
       <boxBufferGeometry args={[15,1,10]}/>
       <meshPhysicalMaterial />
-    </mesh>
-  )
-}
-
-const Bulb = props => {
-  return (
-    <mesh {...props}>
-      <sphereBufferGeometry args={[0.2, 20, 10]} />
-      <pointLight castShadow/>
-      <meshPhongMaterial emissive='yellow'/>
     </mesh>
   )
 }
@@ -247,28 +220,39 @@ function App() {
       >
         <ambientLight intensity={0.2} />
         <Orbit />
+        <Bulb position={[0,5,0]}/>
 
         {/* main objs */}
         <Physics>
-          <Drag>
-            <Bulb position={[0,10,0]}/>
+          <Suspense fallback={null}>
+            <Drag transformGroup>
+              <BoundingBox
+                position={[4,1.5,0]}
+                dims={[3.2,1.7,7.5]}
+                offset={[0,-1.2,0]}
+                visible
+              >
+                <Model
+                  path='/dodge_challenger/scene.gltf'
+                  scale={[0.015, 0.015, 0.015]}
+                />
+              </BoundingBox>
+            </Drag>
 
-            <Suspense fallback={null}>
-              <Model
-                path='/dodge_challenger/scene.gltf'
-                position={[4,0.3,0]}
-                scale={[0.015, 0.015, 0.015]}
-              />
-            </Suspense>
-
-            <Suspense fallback={null}>
-              <Model
-                path='/lamborghini_aventador_j/scene.gltf'
-                position={[-4,1.15,0]}
-                scale={[0.0085, 0.0085, 0.0085]}
-              />
-            </Suspense>
-          </Drag>
+            <Drag transformGroup>
+              <BoundingBox
+                position={[-4,1.5,0]}
+                dims={[4,1.3,8.7]}
+                offset={[0,-0.1,0.5]}
+                visible
+              >
+                <Model
+                  path='/lamborghini_aventador_j/scene.gltf'
+                  scale={[0.0085, 0.0085, 0.0085]}
+                />
+              </BoundingBox>
+            </Drag>
+          </Suspense>
           <Floor position={[0,-0.5,0]}/>
         </Physics>
 
