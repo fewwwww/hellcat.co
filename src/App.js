@@ -1,8 +1,10 @@
 import { Canvas, useFrame, useThree, extend, useLoader } from 'react-three-fiber';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import * as THREE from 'three';
+import { Physics } from "use-cannon";
+import { useBox } from "use-cannon";
 import { Suspense } from "react";
 
 extend({ OrbitControls, DragControls });
@@ -68,15 +70,15 @@ const Drag = props => {
 }
 
 const Box = (props) => {
-  const boxRef = useRef()
+  const [ref, api] = useBox(() => ({mass: 1, ...props}))
   const texture = useLoader(
     THREE.TextureLoader,
     '/wood.jpeg'
   )
-
-  useFrame(state => {
-    boxRef.current.rotation.x += 0.01
-  })
+  //
+  // useFrame(state => {
+  //   boxRef.current.rotation.x += 0.01
+  // })
 
   const handlePointerDown = e => {
     e.object.active = true;
@@ -107,7 +109,8 @@ const Box = (props) => {
 
   return (
     <mesh
-      ref={boxRef}
+      ref={ref}
+      api={api}
       {...props}
       castShadow
       receiveShadow
@@ -116,12 +119,21 @@ const Box = (props) => {
       onPointerLeave={handlePointerLeave}
     >
       <sphereBufferGeometry args={[1,100,100]}/>
-      <meshPhysicalMaterial map={texture}/>
+      <meshPhysicalMaterial
+        map={texture}
+      />
     </mesh>
   )
 }
 
 const Floor = props => {
+  const [ref, api] = useBox(() =>
+    ({
+      args: [15,2,10],
+      ...props
+    })
+  )
+
   return (
     <mesh {...props} receiveShadow>
       <boxBufferGeometry args={[15,1,10]}/>
@@ -143,14 +155,16 @@ const Bulb = props => {
 const Background = props => {
   const texture = useLoader(
     THREE.TextureLoader,
-    '/sky.jpeg'
+    '/bg.jpeg'
   )
 
   // format the stretch of texture correctly
   const {gl} = useThree()
-  const formattedTexture = new THREE.WebGLCubeRenderTarget(
-    texture.image.height
-  ).fromEquirectangularTexture(gl, texture)
+  const formattedTexture = useMemo(() =>
+      new THREE.WebGLCubeRenderTarget(
+        texture.image.height
+      ).fromEquirectangularTexture(gl, texture)
+    ,[])
 
   return (
     <primitive
@@ -215,27 +229,26 @@ function App() {
 
       <Canvas
         shadowMap
-        camera={{position: [6,6,6]}}
+        camera={{position: [10,10,10]}}
       >
-        <fog attach='fog' args={['white', 1, 50]}/>
         <ambientLight intensity={0.2} />
-        <Bulb position={[0,8,0]}/>
-
         <Orbit />
 
         {/* main objs */}
-        <Drag>
-          <Suspense fallback={null}>
-            <Box position={[-3,1,0]}/>
-          </Suspense>
-          <Suspense fallback={null}>
-            <Box position={[3,1,0]}/>
-          </Suspense>
-        </Drag>
+        <Physics>
+          <Drag>
+            <Bulb position={[0,2,0]}/>
+            <Suspense fallback={null}>
+              <Box position={[-3,1,0]}/>
+            </Suspense>
+            <Suspense fallback={null}>
+              <Box position={[3,1,0]}/>
+            </Suspense>
+          </Drag>
+          <Floor position={[0,-0.5,0]}/>
+        </Physics>
 
         <axesHelper args={[5]}/>
-        <Floor position={[0,-0.5,0]}/>
-
         <Suspense fallback={null}>
           <Background />
         </Suspense>
