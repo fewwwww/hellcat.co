@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { Physics } from "use-cannon";
 import { useBox } from "use-cannon";
 import { Suspense } from "react";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 extend({ OrbitControls, DragControls });
 
@@ -66,6 +67,19 @@ const Drag = props => {
       />
       {props.children}
     </group>
+  )
+}
+
+const Model = props => {
+  const model = useLoader(
+    GLTFLoader,
+    props.path
+  )
+  return (
+    <primitive
+      object={model.scene}
+      {...props}
+    />
   )
 }
 
@@ -237,12 +251,22 @@ function App() {
         {/* main objs */}
         <Physics>
           <Drag>
-            <Bulb position={[0,2,0]}/>
+            <Bulb position={[0,10,0]}/>
+
             <Suspense fallback={null}>
-              <Box position={[-3,1,0]}/>
+              <Model
+                path='/dodge_challenger/scene.gltf'
+                position={[4,0.3,0]}
+                scale={[0.015, 0.015, 0.015]}
+              />
             </Suspense>
+
             <Suspense fallback={null}>
-              <Box position={[3,1,0]}/>
+              <Model
+                path='/lamborghini_aventador_j/scene.gltf'
+                position={[-4,1.15,0]}
+                scale={[0.0085, 0.0085, 0.0085]}
+              />
             </Suspense>
           </Drag>
           <Floor position={[0,-0.5,0]}/>
