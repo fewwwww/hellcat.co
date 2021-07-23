@@ -8,6 +8,7 @@ import { useBox } from "use-cannon";
 import { Suspense } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import state from './state';
+import Github from './github.png';
 
 extend({ OrbitControls, DragControls });
 
@@ -83,6 +84,33 @@ const Bulb = props => {
       />
       <meshPhongMaterial emissive='yellow'/>
     </mesh>
+  )
+}
+
+const Logo = () => {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        display: 'flex',
+        justifyContent: 'space-between',
+        width: '90vw',
+        left: '5vw',
+        zIndex: '1',
+        top: '10px'
+      }}
+    >
+      <div
+        style={{
+          fontSize: '50px'
+        }}
+      >
+        𝖍𝖊𝖑𝖑𝖈𝖆𝖙.𝖈𝖔
+      </div>
+      <a href="https://github.com/fewwwww/hellcat.co">
+        <img src={Github} alt="https://github.com/fewwwww/hellcat.co"/>
+      </a>
+    </div>
   )
 }
 
@@ -336,6 +364,7 @@ function App() {
     <div style={{height:'100vh', width: '100vw'}}>
       <CameraButtons />
       <ColorPicker />
+      <Logo />
 
       <Canvas
         shadowMap
