@@ -125,7 +125,7 @@ const Orbit = () => {
 }
 ```
 
--useLoader: load assets asnycly, so we need suspense
+- useLoader: load assets asnycly, so we need suspense
 ```
 const Box = () => {
 
